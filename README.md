@@ -53,7 +53,11 @@ g1 +
 
 ![](README_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
-![](README_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+![](README_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
 
 
 
@@ -220,9 +224,11 @@ dat_nest %>%
 
 
 
-![](README_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
-![](README_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+
+![](README_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 
 
@@ -240,11 +246,9 @@ data.frame(x = seq(0, 15, by = 0.1)) %>%
   theme(axis.title = element_blank())
 ```
 
-![](README_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
-```r
-ggsave("fig/g8.png", width = 4, height = 3)
-```
+
 
 
 
@@ -284,7 +288,8 @@ penguins %>%
   theme(legend.position = "none")
 ```
 
-![](README_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+
 
 
 
@@ -364,11 +369,9 @@ penguins %>%
   geom_boxplot()
 ```
 
-![](README_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
-```r
-ggsave("fig/p2.png", width = 4, height = 3)
-```
+
 
 
 ```r
@@ -422,17 +425,19 @@ dat
 
 
 ```r
+sample_N <- 5000
+
 y_me <- dat$y %>% mean()
 
 y_sd <- dat$y %>% sd()
 
-a <- dat_lm$coefficients[2]
+a_dat <- dat_lm$coefficients[2]
 ```
 
 
 ```r
 dat_resample <-
-  tibble(tag = seq(1:5000)) %>%
+  tibble(tag = seq(1:sample_N)) %>%
   mutate(data = map(tag, ~ rnorm(N, y_me, y_sd))) %>%
   mutate(data = map(data, ~ data.frame(x = dat$x, y = .))) 
 
@@ -445,23 +450,21 @@ dat_resample_lm %>%
   ggplot() +
   aes(a)+
   geom_density()+
-  geom_vline(xintercept = a,
+  geom_vline(xintercept = a_dat,
              color = "Blue",
              linetype = "dotted")
 ```
 
-![](README_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+
+
 
 
 ```r
-ggsave("fig/g9.png", width = 4, height = 3)
-```
-
-
-```r
-.a <- dat_resample_lm$a
-
-.a[.a > a] %>% length(.)/length(.a)
+dat_resample_lm %>% 
+  filter(a > a_dat) %>% 
+  nrow() %>% 
+  {. / sample_N}
 ```
 
 ```
