@@ -250,6 +250,8 @@ ggsave("fig/g8.png", width = 4, height = 3)
 
 # penguins
 
+[palmerpenguins package](https://allisonhorst.github.io/palmerpenguins/)
+
 
 ```r
 penguins
@@ -333,6 +335,59 @@ penguins %>%
 ## F-statistic: 594.8 on 2 and 339 DF,  p-value: < 2.2e-16
 ```
 
+```r
+penguins_species <-
+  penguins %>%
+  select(flipper_length_mm, species) %>% 
+  mutate(isAdelie = if_else(species == "Adelie", 1, 0),
+         isGentoo = if_else(species == "Gentoo", 1, 0),
+         isChinstrap = if_else(species == "Chinstrap", 1, 0))
+
+penguins_species %>%
+  lm(flipper_length_mm ~ isGentoo + isChinstrap, data = .) 
+```
+
+```
+## 
+## Call:
+## lm(formula = flipper_length_mm ~ isGentoo + isChinstrap, data = .)
+## 
+## Coefficients:
+## (Intercept)     isGentoo  isChinstrap  
+##      189.95        27.23         5.87
+```
+
+```r
+penguins %>% 
+  ggplot()+
+  aes(species, flipper_length_mm, color = sex)+
+  geom_boxplot()
+```
+
+![](README_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+
+```r
+ggsave("fig/p2.png", width = 4, height = 3)
+```
+
+
+```r
+penguins %>% 
+  lm(flipper_length_mm ~ species + sex + species * sex, data = .) %>% 
+  aov() %>% 
+  summary()
+```
+
+```
+##              Df Sum Sq Mean Sq F value  Pr(>F)    
+## species       2  50526   25263 789.912 < 2e-16 ***
+## sex           1   3906    3906 122.119 < 2e-16 ***
+## species:sex   2    329     165   5.144 0.00631 ** 
+## Residuals   327  10458      32                    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 11 observations deleted due to missingness
+```
 
 
 ```r
@@ -342,4 +397,73 @@ penguins_xy <-
          y = flipper_length_mm) %>% 
   filter(!is.na(x)) %>% 
   filter(!is.na(y))
+```
+
+# resampling
+
+
+```r
+dat
+```
+
+```
+##            x         y
+## 1  0.0000000 0.2197622
+## 2  0.1111111 0.6071335
+## 3  0.2222222 1.7237986
+## 4  0.3333333 1.2019209
+## 5  0.4444444 1.4535328
+## 6  0.5555556 2.4686436
+## 7  0.6666667 2.0637914
+## 8  0.7777778 1.4230249
+## 9  0.8888889 1.9343514
+## 10 1.0000000 2.2771690
+```
+
+
+```r
+y_me <- dat$y %>% mean()
+
+y_sd <- dat$y %>% sd()
+
+a <- dat_lm$coefficients[2]
+```
+
+
+```r
+dat_resample <-
+  tibble(tag = seq(1:5000)) %>%
+  mutate(data = map(tag, ~ rnorm(N, y_me, y_sd))) %>%
+  mutate(data = map(data, ~ data.frame(x = dat$x, y = .))) 
+
+dat_resample_lm <-
+  dat_resample %>% 
+  mutate(lm = map(data, ~ lm(y ~ x, data = .))) %>% 
+  mutate(a = map_dbl(lm, ~.$coefficients[2]))
+
+dat_resample_lm %>% 
+  ggplot() +
+  aes(a)+
+  geom_density()+
+  geom_vline(xintercept = a,
+             color = "Blue",
+             linetype = "dotted")
+```
+
+![](README_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+
+
+```r
+ggsave("fig/g9.png", width = 4, height = 3)
+```
+
+
+```r
+.a <- dat_resample_lm$a
+
+.a[.a > a] %>% length(.)/length(.a)
+```
+
+```
+## [1] 0.0112
 ```
